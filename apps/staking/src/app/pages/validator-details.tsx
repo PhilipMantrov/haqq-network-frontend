@@ -3,12 +3,10 @@ import { Navigate, useParams } from 'react-router-dom';
 import { Container } from '@haqq/ui-kit';
 import { ValidatorInfo } from '../components/validator-info/validator-info';
 import { StakingInfo } from '../components/rewards-info/rewards-info';
+import { environment } from '../../environments/environment';
 
 export function ValidatorDetailsPage() {
-  let { address } = useParams();
-  address = "haqqvaloper1c34s5m4z9n8vrqdx96c67myhmvqspda8f47qyk";
-
-  if (!address) {
+  if (!environment.stakingAddress) {
     return <Navigate to="/not-found" replace />;
   }
 
@@ -19,7 +17,7 @@ export function ValidatorDetailsPage() {
       </Container>
 
       <Container className="flex flex-1">
-        <ValidatorInfo validatorAddress={address} />
+        <ValidatorInfo validatorAddress={environment.stakingAddress} />
       </Container>
     </Fragment>
   );

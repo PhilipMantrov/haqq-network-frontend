@@ -5,7 +5,8 @@ import { ValidatorInfo } from '../components/validator-info/validator-info';
 import { StakingInfo } from '../components/rewards-info/rewards-info';
 
 export function ValidatorDetailsPage() {
-  const { address } = useParams();
+  let { address } = useParams();
+  address = "haqqvaloper1c34s5m4z9n8vrqdx96c67myhmvqspda8f47qyk";
 
   if (!address) {
     return <Navigate to="/not-found" replace />;

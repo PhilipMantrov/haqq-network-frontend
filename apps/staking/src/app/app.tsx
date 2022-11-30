@@ -16,9 +16,8 @@ export function App() {
     <div className="flex-1 flex flex-col space-y-10 py-10">
       <Suspense fallback={<PendingPage />}>
         <Routes>
-          <Route path="/" element={<ValidatorsPage />} />
+          <Route path="/" element={<ValidatorDetailsPage />} />
           <Route path="validator/:address" element={<ValidatorDetailsPage />} />
-
           <Route path="not-found" element={<NotFoundPage />} />
           <Route path="*" element={<Navigate to="/not-found" replace />} />
         </Routes>

@@ -1,5 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=El+Messiri:wght@300;400;500;600;700&family=Open+Sans:wght@300;400;500;600;700&display=swap');
-@import 'ress';
 
 @tailwind components;
 @tailwind base;
@@ -45,6 +44,11 @@
       rgba(91, 171, 205, 0.2) 0.01%,
       rgba(54, 54, 54, 0) 80%
     );
+
+  --haqq-color-stroke: rgb(71 85 105 / 0.4);
+  --haqq-color-green: rgb(100, 116, 139);
+  --haqq-color-black: rgb(100, 116, 139);
+  --haqq-transition-duration: 125ms;
 }
 
 html,

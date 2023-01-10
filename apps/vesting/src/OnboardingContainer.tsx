@@ -10,10 +10,9 @@ import {
 } from 'react';
 import { hexValue } from 'ethers/lib/utils';
 import { useAccount, useConnect, useNetwork } from 'wagmi';
-import { getChainParams } from './config';
 import MetaMaskOnboarding from '@metamask/onboarding';
 import { NoMetamaskAlert } from './components/modals/NoMetamaskAlert/NoMetamaskAlert';
-import { environment } from './environments/environment';
+import { getChainParams, useConfig } from '@haqq/shared';
 
 export type OnboardingSteps =
   | 'start'
@@ -36,7 +35,8 @@ export interface OnboardingHook {
 const OnboardingContext = createContext<OnboardingHook | undefined>(undefined);
 
 export function OnboardingContainer({ children }: { children: ReactElement }) {
-  const chain = getChainParams(environment.chain);
+  const { chainName } = useConfig();
+  const chain = getChainParams(chainName);
   const targetNetworkIdHex = hexValue(chain.id);
   const onboarding = useRef<MetaMaskOnboarding>();
   const [step, setOnboardingStep] = useState<OnboardingSteps>('start');
@@ -103,7 +103,7 @@ export function OnboardingContainer({ children }: { children: ReactElement }) {
             {
               chainId: targetNetworkIdHex,
               chainName: chain.name,
-              rpcUrls: [chain.rpcUrls.default],
+              rpcUrls: [chain.ethRpcEndpoint],
               nativeCurrency: chain.nativeCurrency,
             },
           ],
@@ -114,9 +114,9 @@ export function OnboardingContainer({ children }: { children: ReactElement }) {
       }
     }
   }, [
+    chain.ethRpcEndpoint,
     chain.name,
     chain.nativeCurrency,
-    chain.rpcUrls.default,
     errors,
     targetNetworkIdHex,
   ]);

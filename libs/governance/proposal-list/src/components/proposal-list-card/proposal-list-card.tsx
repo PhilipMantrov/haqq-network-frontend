@@ -1,18 +1,10 @@
+import { useMemo } from 'react';
 import { Proposal, ProposalStatus } from '@evmos/provider';
-import { Card } from '@haqq/ui-kit';
+import { Card, CardHeading } from '@haqq/ui-kit';
 import clsx from 'clsx';
-import { ReactNode, useMemo } from 'react';
 
 export interface ProposalListCardProps {
   proposal: Proposal;
-}
-
-export function CardHeading({ children }: { children: ReactNode }) {
-  return (
-    <div className="text-sm font-medium leading-relaxed text-gray-400 uppercase">
-      {children}
-    </div>
-  );
 }
 
 export function ProposalStatusComponent({ status }: { status: string }) {
@@ -106,7 +98,16 @@ export function ProposalStatusComponent({ status }: { status: string }) {
   }
 }
 
-export function ProposalVoteResults({ results }: { results: any }) {
+export function ProposalVoteResults({
+  results,
+}: {
+  results: {
+    yes: string;
+    abstain: string;
+    no: string;
+    no_with_veto: string;
+  };
+}) {
   const { yes, abstain, no, veto, total } = useMemo(() => {
     const yes = Number.parseInt(results.yes) / 10 ** 18;
     const abstain = Number.parseInt(results.abstain) / 10 ** 18;
@@ -208,7 +209,9 @@ export function ProposalListCard({ proposal }: ProposalListCardProps) {
         <ProposalStatusComponent status={proposal.status as string} />
       </div>
 
-      <div className="font-semibold text-xl">{proposal.content.title}</div>
+      <div className="font-semibold text-xl min-h-[48px] leading-[24px]">
+        {proposal.content.title}
+      </div>
 
       <div className="flex flex-row">
         <div className="flex-1 text-sm">

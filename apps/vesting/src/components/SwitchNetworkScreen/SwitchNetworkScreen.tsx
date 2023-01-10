@@ -1,8 +1,7 @@
-import { hexValue } from 'ethers/lib/utils';
 import { ReactElement } from 'react';
+import { getChainParams, useConfig } from '@haqq/shared';
+import { hexValue } from 'ethers/lib/utils';
 import { useNetwork } from 'wagmi';
-import { getChainParams } from '../../config';
-import { environment } from '../../environments/environment';
 import { useOnboarding } from '../../OnboardingContainer';
 import { Button } from '../Button/Button';
 import { AlertWithDetails } from '../modals/AlertWithDetails/AlertWithDetails';
@@ -51,7 +50,8 @@ export function SwitchNetworkScreen(): ReactElement {
     clearError,
     switchNetwork,
   } = useOnboarding();
-  const chain = getChainParams(environment.chain);
+  const { chainName } = useConfig();
+  const chain = getChainParams(chainName);
   const { chain: currentChain } = useNetwork();
 
   return (

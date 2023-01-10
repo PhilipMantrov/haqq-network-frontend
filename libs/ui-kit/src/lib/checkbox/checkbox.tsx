@@ -2,7 +2,6 @@ import { ChangeEvent, ReactNode, useCallback } from 'react';
 import clsx from 'clsx';
 import styled from '@emotion/styled';
 import { Text } from '../typography/typography';
-// import { Text } from './Typography';
 
 export interface CheckboxProps {
   id?: string;
@@ -14,9 +13,9 @@ export interface CheckboxProps {
 }
 
 const CheckboxContainer = styled.div`
-  --checkbox-border-width: 1px;
+  --checkbox-border-width: 1.5px;
   --checkbox-border-radius: 4px;
-  --checkbox-size: 24px;
+  --checkbox-size: 20px;
   --checkbox-color: var(--haqq-color-stroke);
 `;
 
@@ -80,8 +79,8 @@ export function Checkbox({
       <label
         htmlFor={id}
         className={clsx(
-          'relative select-none inline-flex flex-row items-center cursor-pointer',
-          'disabled:opacity-60 disabled:cursor-not-allowed',
+          'relative select-none inline-flex flex-row items-center',
+          disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
         )}
       >
         <CheckboxInputElement

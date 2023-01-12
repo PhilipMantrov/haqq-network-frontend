@@ -19,6 +19,7 @@
     "start:vesting": "yarn nx run vesting:serve",
     "start:faucet": "yarn nx run faucet:serve",
     "start:website": "yarn nx run website:serve",
+    "start:staking": "yarn nx run staking:serve",
     "format": "yarn prettier --write '**/*.{ts,js,tsx,jsx,cjs,mjs,css,json,md,mdx,html,yaml,yml}'",
     "prepare": "is-ci || husky install",
     "check-ignore-build": "yarn node ./tools/scripts/ignore-build.mjs"

@@ -107,7 +107,9 @@ export function StakingInfoComponent({
               <Button2 onClick={onChangeNetwork}>Change network</Button2>
             )
           ) : (
-            <Button2 onClick={onWalletConnect}>Connect wallet</Button2>
+            <Button2 disabled={rewards < 1} onClick={onRewardsClaim}>
+              Claim all rewards
+            </Button2>
           )}
         </div>
       </div>

@@ -12,6 +12,8 @@ export async function createTendermintClient({
   chainName: string;
 }) {
   const { tmRpcEndpoint } = getChainParams(chainName);
+  console.log(chainName);
+  console.log(tmRpcEndpoint);
   const tmClient = await Tendermint34Client.connect(tmRpcEndpoint);
   // const tmWsClient = new WebsocketClient(tmRpcWsEndpoint);
   // const tmClient = await Tendermint34Client.create(tmWsClient);

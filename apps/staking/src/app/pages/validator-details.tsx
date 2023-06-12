@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { Container } from '@haqq/ui-kit';
 import { ValidatorInfo } from '../components/validator-info/validator-info';
 import { StakingInfo } from '../components/rewards-info/rewards-info';

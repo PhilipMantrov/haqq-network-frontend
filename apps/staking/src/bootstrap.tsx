@@ -25,7 +25,6 @@ async function startApp() {
   const tendermintClient = await createTendermintClient({
     chainName: environment.chainName,
   });
-  console.log(environment.chainName, 'env');
 
   root.render(
     <AppContainer tendermintClient={tendermintClient}>

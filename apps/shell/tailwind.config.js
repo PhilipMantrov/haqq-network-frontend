@@ -1,4 +1,4 @@
-const { createGlobPatternsForDependencies } = require('@nrwl/react/tailwind');
+const { createGlobPatternsForDependencies } = require('@nx/react/tailwind');
 const { join } = require('path');
 const typographyPlugin = require('@tailwindcss/typography');
 const { tailwindThemeExtend } = require('../../shared-tailwind-theme');
@@ -16,8 +16,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--islamic-font-sans)'],
-        serif: ['var(--islamic-font-serif)'],
+        sans: ['var(--guise-font)'],
+        serif: ['var(--clash-font)'],
       },
       colors: {
         ...tailwindThemeExtend.colors,

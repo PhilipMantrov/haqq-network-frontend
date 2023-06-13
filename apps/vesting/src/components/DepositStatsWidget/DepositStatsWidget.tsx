@@ -6,7 +6,7 @@ import { Card } from '../Card/Card';
 import { Heading, Text } from '../Typography/Typography';
 import HaqqVestingContract from '../../../HaqqVesting.json';
 import { Spinner } from '../Playground/Playground';
-import { formatEther, isAddress } from 'ethers/lib/utils';
+import { BigNumber } from 'ethers';
 import { Button, DangerButton } from '../Button/Button';
 import { DepositNavigation } from '../DepositNavigation/DepositNavigation';
 import { useNextUnlockDate } from '../../hooks/useNextUnlockDate';
@@ -17,6 +17,8 @@ import { Input } from '../Input/Input';
 import { AlertWithDetails } from '../modals/AlertWithDetails/AlertWithDetails';
 import { useConfig, getChainParams } from '@haqq/shared';
 import { mapSCResponseToJson } from '../../utils/mapSCResponseToJson';
+import { formatDate } from '../../utils/format-date';
+import { formatEther, isAddress } from 'ethers/lib/utils';
 
 export { HaqqVestingContract };
 
@@ -53,7 +55,7 @@ function NextDepositUnlock({
   return (
     <DepositInfoStatsRow
       label="Next unlock date"
-      value={`${nextUnlockDate.toLocaleString()}`}
+      value={formatDate(nextUnlockDate)}
     />
   );
 }
@@ -146,9 +148,9 @@ export function DepositStatsWidget({
   }, [address, currentDeposit, depositsCount, requestDepStats]);
 
   return (
-    <Card className="overflow-hidden max-w-lg mx-auto w-full">
+    <Card className="mx-auto w-full max-w-lg overflow-hidden">
       <div className="flex flex-col space-y-6">
-        <div className="pt-6 px-6 flex flex-row space-x-6 justify-between">
+        <div className="flex flex-row justify-between space-x-6 px-6 pt-6">
           <Heading level={3} className="uppercase">
             Deposit
           </Heading>
@@ -164,13 +166,13 @@ export function DepositStatsWidget({
 
         <div className="flex flex-col space-y-4">
           {!isConnected && (
-            <div className="p-10 flex items-center justify-center min-h-[200px]">
+            <div className="flex min-h-[200px] items-center justify-center p-10">
               <Spinner />
             </div>
           )}
 
           {isConnected && depositsCount === 0 && (
-            <div className="text-center px-6 py-12">
+            <div className="px-6 py-12 text-center">
               <Heading level={3}>You have no deposits</Heading>
             </div>
           )}
@@ -215,7 +217,7 @@ export function DepositInfo({ deposit, symbol }: DepositInfoArgs) {
     <div className="flex flex-col space-y-2 px-6">
       <DepositInfoStatsRow
         label="Deposit creation date"
-        value={new Date(deposit.createdAt).toLocaleString()}
+        value={formatDate(new Date(deposit.createdAt))}
       />
       <DepositInfoStatsRow
         label="My timezone"
@@ -223,7 +225,10 @@ export function DepositInfo({ deposit, symbol }: DepositInfoArgs) {
       />
       <DepositInfoStatsRow
         label="Deposited"
-        value={`${formatEther(deposit.deposited)} ${symbol}`}
+        value={`${Number.parseInt(
+          formatEther(deposit.deposited),
+          10,
+        ).toLocaleString()} ${symbol}`}
       />
       <DepositInfoStatsRow
         label="Locked"
@@ -234,16 +239,25 @@ export function DepositInfo({ deposit, symbol }: DepositInfoArgs) {
       />
       <DepositInfoStatsRow
         label="Unlocked"
-        value={`${Number(formatEther(deposit.unlocked)).toFixed(3)} ${symbol}`}
+        value={`${Number.parseInt(
+          formatEther(deposit.unlocked),
+          10,
+        ).toLocaleString()} ${symbol}`}
       />
       <DepositInfoStatsRow
         label="Withdrawn"
-        value={`${Number(formatEther(deposit.withdrawn)).toFixed(3)} ${symbol}`}
+        value={`${Number.parseInt(
+          formatEther(deposit.withdrawn),
+          10,
+        ).toLocaleString()} ${symbol}`}
       />
-      <DepositInfoStatsRow
+      {/* <DepositInfoStatsRow
         label="Available"
-        value={`${Number(formatEther(deposit.available)).toFixed(3)} ${symbol}`}
-      />
+        value={`${Number.parseInt(
+          formatEther(deposit.available),
+          10,
+        ).toLocaleString()} ${symbol}`}
+      /> */}
       <NextDepositUnlock
         createdAt={deposit.createdAt}
         period={deposit.unlockPeriod}
@@ -404,7 +418,7 @@ function Transfer({ contractAddress, symbol }: TransferAndWithdrawArgs) {
           Transfer ownership
         </DangerButton>
       ) : (
-        <div className="flex flex-col space-y-4 mt-4">
+        <div className="mt-4 flex flex-col space-y-4">
           <Heading level={4}>Transfer deposit ownership</Heading>
           <Input
             required
@@ -434,9 +448,9 @@ function Transfer({ contractAddress, symbol }: TransferAndWithdrawArgs) {
           setWarningModalOpen(false);
         }}
       >
-        <div className="bg-white rounded-2xl p-6 max-w-xl mx-auto">
+        <div className="mx-auto max-w-xl rounded-2xl bg-white p-6">
           <div className="flex flex-col space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
               <Heading level={3}>Transfer deposit ownership</Heading>
               <ModalCloseButton
                 onClick={() => {

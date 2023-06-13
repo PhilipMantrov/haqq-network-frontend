@@ -1,4 +1,4 @@
-const { createGlobPatternsForDependencies } = require('@nrwl/react/tailwind');
+const { createGlobPatternsForDependencies } = require('@nx/react/tailwind');
 const { join } = require('path');
 const typographyPlugin = require('@tailwindcss/typography');
 
@@ -18,10 +18,18 @@ module.exports = {
         'haqq-border': '#FFFFFF3D',
         'haqq-black': '#0D0D0E',
         'haqq-orange': '#EC5728',
+        'haqq-light-orange': '#FF8D69',
+        'haqq-blue': '#091D53',
+        'haqq-seaweed': '#157C83',
+        'haqq-bigfoot-feet': '#E98C50',
+        'haqq-azure': '#ECFEFE',
+        'haqq-gold': '#E3A13F',
       },
       fontFamily: {
         serif: ['var(--font-clash)'],
         sans: ['var(--font-guise)'],
+        messiri: ['var(--font-messiri)'],
+        manrope: ['var(--font-manrope)'],
       },
     },
   },

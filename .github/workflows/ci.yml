@@ -13,14 +13,14 @@ concurrency:
 jobs:
   test-and-lint:
     name: Test and Lint
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18.12.1
+          node-version: 18.16.0
           cache: yarn
       - name: Setup dependencies
         run: yarn install --immutable
@@ -36,15 +36,17 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: test-and-lint
+    env:
+      STORYBLOK_ACCESS_TOKEN: ${{ secrets.STORYBLOK_ACCESS_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18.12.1
+          node-version: 18.16.0
           cache: yarn
       - name: Setup dependencies
         run: yarn install --immutable

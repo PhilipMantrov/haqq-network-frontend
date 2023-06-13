@@ -8,6 +8,7 @@ import {
   DistributionExtension,
   setupGovExtension,
   GovExtension,
+  GovParamsType,
 } from '@cosmjs/stargate';
 import {
   bondStatusToJSON,
@@ -28,6 +29,8 @@ import {
   Validator,
   GetDelegationsResponse,
   DistributionRewardsResponse,
+  BroadcastMode,
+  TxToSend,
 } from '@evmos/provider';
 import { signatureToPubkey } from '@hanchon/signature-to-pubkey';
 import { BondStatusString } from '@cosmjs/stargate/build/modules/staking/queries';
@@ -37,6 +40,7 @@ import { TendermintClientContext } from './tendermint-provider';
 import { useConfig } from './config-provider';
 import { getChainParams } from '../chains/get-chain-params';
 import { Coin } from '@evmos/transactions';
+import axios from 'axios';
 
 interface CosmosClient
   extends QueryClient,
@@ -44,12 +48,27 @@ interface CosmosClient
     DistributionExtension,
     GovExtension {}
 
-type Signer = {
+interface Signer {
   signMessage: (message: string) => Promise<string>;
-};
+}
+
+export interface GovernanceParamsResponse {
+  voting_params: {
+    voting_period: string;
+  };
+  deposit_params: {
+    min_deposit: Coin[];
+    max_deposit_period: string;
+  };
+  tally_params: {
+    quorum: string;
+    threshold: string;
+    veto_threshold: string;
+  };
+}
 
 // TODO: typings
-interface ComsosService {
+interface CosmosService {
   getPaginatedValidators: (params: { pageParam?: Uint8Array }) => Promise<{
     pages: CosmjsValidator[];
     pageParam?: Uint8Array;
@@ -67,10 +86,14 @@ interface ComsosService {
   getAuthAccounts: () => Promise<GetAuthAccountsResponse>;
   getDistributionPool: () => Promise<GetDistributionPoolResponse>;
   getBankSupply: () => Promise<GetBankSupplyResponse>;
+  simulateTransaction: (tx: TxToSend) => Promise<SimulateTxResponse>;
+  broadcastTransaction: (tx: TxToSend) => Promise<BroadcastTxResponse>;
 
   getAccountInfo: any;
-  broadcastTransaction: any;
   getUndelegations: any;
+  getGovernanceParams: (
+    type: GovParamsType,
+  ) => Promise<GovernanceParamsResponse>;
 }
 
 export const CosmosClientContext = createContext<CosmosClient | undefined>(
@@ -89,7 +112,7 @@ export function useCosmosClient() {
   return cosmosClient;
 }
 
-export const CosmosServiceContext = createContext<ComsosService | undefined>(
+export const CosmosServiceContext = createContext<CosmosService | undefined>(
   undefined,
 );
 
@@ -119,6 +142,10 @@ function generateEndpointDistributionPool() {
 
 function generateEndpointBankSupply() {
   return '/cosmos/bank/v1beta1/supply';
+}
+
+function generateEndpointGovParams(type: GovParamsType) {
+  return `/cosmos/gov/v1beta1/params/${type}`;
 }
 
 export interface GetStakingPoolResponse {
@@ -155,11 +182,15 @@ export interface GetBankSupplyResponse {
   pagination: Pagination;
 }
 
+function generateSimulateEndpoint() {
+  return '/cosmos/tx/v1beta1/simulate';
+}
+
 function createCosmosService(
   cosmosClient: CosmosClient,
   cosmosRestEndpoint: string,
   signer?: Signer,
-): ComsosService {
+): CosmosService {
   async function getAllValidators(limit = 1000) {
     const getValidatorsUrl = new URL(
       `${cosmosRestEndpoint}/${generateEndpointGetValidators()}`,
@@ -167,10 +198,11 @@ function createCosmosService(
 
     getValidatorsUrl.searchParams.append('pagination.limit', limit.toString());
 
-    const response = await fetch(getValidatorsUrl);
-    const data = await response.json();
+    const response = await axios.get<{ validators: Validator[] }>(
+      getValidatorsUrl.toString(),
+    );
 
-    return data.validators as Validator[];
+    return response.data.validators;
   }
 
   async function getPaginatedValidators({
@@ -202,55 +234,41 @@ function createCosmosService(
   }
 
   async function getRewardsInfo(address: string) {
-    const info = await fetch(
+    const info = await axios.get<DistributionRewardsResponse>(
       `${cosmosRestEndpoint}/${generateEndpointDistributionRewardsByAddress(
         address,
       )}`,
     );
 
-    return (await info.json()) as DistributionRewardsResponse;
+    return info.data;
   }
 
   async function getUndelegations(address: string) {
-    const undelegationsResponse = await fetch(
+    const undelegationsResponse = await axios.get(
       `${cosmosRestEndpoint}/${generateEndpointGetUndelegations(address)}`,
     );
-    const undelegations = await undelegationsResponse.json();
 
-    return undelegations.unbonding_responses;
+    return undelegationsResponse.data.unbonding_responses;
   }
 
   async function getAccountInfo(address: string) {
-    // console.log('getAccountInfo', address);
-    const fetchedAcc = await fetch(
+    const fetchedAcc = await axios.get(
       `${cosmosRestEndpoint}/${generateEndpointAccount(address)}`,
-      {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      },
     );
-    const acc = await fetchedAcc.json();
 
-    return acc.account.base_account;
+    return fetchedAcc.data.account.base_account;
   }
 
-  async function broadcastTransaction(txToBroadcast: any) {
-    // console.log('broadcastTransaction', {
-    //   txToBroadcast,
-    //   foo: txToBroadcast.message.serializeBinary(),
-    // });
+  async function broadcastTransaction(txToBroadcast: TxToSend) {
     try {
-      const broadcastResponse = await fetch(
+      const broadcastResponse = await axios.post<{
+        tx_response: BroadcastTxResponse;
+      }>(
         `${cosmosRestEndpoint}${generateEndpointBroadcast()}`,
-        {
-          method: 'post',
-          headers: { 'Content-Type': 'application/json' },
-          body: generatePostBodyBroadcast(txToBroadcast),
-        },
+        generatePostBodyBroadcast(txToBroadcast),
       );
-      const { tx_response } = await broadcastResponse.json();
 
-      return tx_response;
+      return broadcastResponse.data.tx_response;
     } catch (error) {
       console.error((error as any).message);
       throw new Error((error as any).message);
@@ -258,11 +276,11 @@ function createCosmosService(
   }
 
   async function getAccountDelegations(address: string) {
-    const delegations = await fetch(
+    const delegations = await axios.get<GetDelegationsResponse>(
       `${cosmosRestEndpoint}/${generateEndpointGetDelegations(address)}`,
     );
 
-    return (await delegations.json()) as GetDelegationsResponse;
+    return delegations.data;
   }
 
   async function generatePubkey() {
@@ -290,7 +308,6 @@ function createCosmosService(
     if (!savedPubKey) {
       try {
         const generatedPubkey = await generatePubkey();
-        console.log({ generatedPubkey });
         store.set(storeKey, generatedPubkey);
         return generatedPubkey;
       } catch (error) {
@@ -309,27 +326,27 @@ function createCosmosService(
 
     proposalsUrl.searchParams.append('pagination.reverse', 'true');
 
-    const proposalsResponse = await fetch(proposalsUrl);
-    const { proposals } = await proposalsResponse.json();
+    const proposalsResponse = await axios.get<{ proposals: Proposal[] }>(
+      proposalsUrl.toString(),
+    );
 
-    return proposals as Proposal[];
+    return proposalsResponse.data.proposals;
   }
 
   async function getProposalDetails(id: string) {
-    const proposalDetailsResponse = await fetch(
+    const proposalDetailsResponse = await axios.get<{ proposal: Proposal }>(
       `${cosmosRestEndpoint}/${generateEndpointProposals()}/${id}`,
     );
-    const { proposal } = await proposalDetailsResponse.json();
 
-    return proposal as Proposal;
+    return proposalDetailsResponse.data.proposal;
   }
 
   async function getStakingPool() {
-    const stakingPoolResponse = await fetch(
+    const stakingPoolResponse = await axios.get<GetStakingPoolResponse>(
       `${cosmosRestEndpoint}/${generateEndpointStakingPool()}`,
     );
 
-    return (await stakingPoolResponse.json()) as GetStakingPoolResponse;
+    return stakingPoolResponse.data;
   }
 
   async function getAuthAccounts() {
@@ -339,25 +356,53 @@ function createCosmosService(
 
     // authAccountsUrl.searchParams.append('pagination.limit', '0');
 
-    const authAccountsResponse = await fetch(authAccountsUrl);
+    const authAccountsResponse = await axios.get<GetAuthAccountsResponse>(
+      authAccountsUrl.toString(),
+    );
 
-    return (await authAccountsResponse.json()) as GetAuthAccountsResponse;
+    return authAccountsResponse.data;
   }
 
   async function getDistributionPool() {
-    const distributionPoolResponse = await fetch(
-      `${cosmosRestEndpoint}/${generateEndpointDistributionPool()}`,
-    );
+    const distributionPoolResponse =
+      await axios.get<GetDistributionPoolResponse>(
+        `${cosmosRestEndpoint}/${generateEndpointDistributionPool()}`,
+      );
 
-    return (await distributionPoolResponse.json()) as GetDistributionPoolResponse;
+    return distributionPoolResponse.data;
   }
 
   async function getBankSupply() {
-    const bankSupplyResponse = await fetch(
+    const bankSupplyResponse = await axios.get<GetBankSupplyResponse>(
       `${cosmosRestEndpoint}/${generateEndpointBankSupply()}`,
     );
 
-    return (await bankSupplyResponse.json()) as GetBankSupplyResponse;
+    return bankSupplyResponse.data;
+  }
+
+  async function getGovernanceParams(type: GovParamsType) {
+    const governanceParamsResponse = await axios.get<GovernanceParamsResponse>(
+      `${cosmosRestEndpoint}/${generateEndpointGovParams(type)}`,
+    );
+
+    return governanceParamsResponse.data;
+  }
+
+  async function simulateTransaction(
+    txToBroadcast: TxToSend,
+    mode: BroadcastMode = BroadcastMode.Sync,
+  ) {
+    try {
+      const simulateUrl = `${cosmosRestEndpoint}${generateSimulateEndpoint()}`;
+      const simulateResponse = await axios.post<SimulateTxResponse>(
+        simulateUrl,
+        generatePostBodyBroadcast(txToBroadcast, mode),
+      );
+      return simulateResponse.data;
+    } catch (error) {
+      console.error((error as any).message);
+      throw new Error((error as any).message);
+    }
   }
 
   return {
@@ -378,7 +423,68 @@ function createCosmosService(
     getAuthAccounts,
     getDistributionPool,
     getBankSupply,
+    simulateTransaction,
+    getGovernanceParams,
   };
+}
+
+interface SimulateTxResponse {
+  gas_info: {
+    gas_used: string;
+    gas_wanted: string;
+  };
+  result: {
+    data: string;
+    log: string;
+    events: {
+      type: string;
+      attributes: {
+        key: string;
+        value: string;
+        index: true;
+      }[];
+    }[];
+    msg_responses: {
+      type_url: string;
+      value: string;
+    }[];
+  };
+}
+
+interface BroadcastTxResponse {
+  height: string;
+  txhash: string;
+  codespace: string;
+  code: number;
+  data: string;
+  raw_log: string;
+  info: string;
+  gas_wanted: string;
+  gas_used: string;
+  tx: {
+    type_url: string;
+    value: string;
+  };
+  timestamp: string;
+  events: {
+    type: string;
+    attributes: {
+      key: string;
+      value: string;
+      index: true;
+    }[];
+  }[];
+  logs: {
+    msg_index: number;
+    log: string;
+    events: {
+      type: string;
+      attributes: {
+        key: string;
+        value: string;
+      }[];
+    }[];
+  }[];
 }
 
 export function CosmosServiceContainer({

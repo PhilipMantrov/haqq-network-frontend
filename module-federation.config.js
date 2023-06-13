@@ -5,7 +5,7 @@ const coreLibraries = new Set([
   'wagmi',
   '@haqq/sentry',
   '@haqq/shared',
-  '@haqq/ui-kit',
+  '@haqq/shell/ui-kit',
   '@cosmjs/stargate',
   '@cosmjs/tendermint-rpc',
   '@emotion/react',
@@ -23,6 +23,7 @@ const coreLibraries = new Set([
   '@headlessui/react',
   'react-hot-toast',
   'store2',
+  'lodash',
 ]);
 
 module.exports = {
